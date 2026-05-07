@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "rm -f public/sw.js public/swe-worker-*.js && next dev",
     "build": "next build --webpack",
-    "start": "next start",
+    "start": "next start -p ${PORT:-3000} -H 0.0.0.0",
     "lint": "eslint"
   },
   "dependencies": {
