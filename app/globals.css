@@ -1,26 +1,256 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   SIMO DIET — Design System
+   Brutal · Bold · Yellow & Black · Spanish-bauhaus brutal feel
+   ========================================================================== */
+
+@theme {
+  /* Brand core */
+  --color-simo-yellow: #F4C600;
+  --color-simo-yellow-50:  #FFF8D6;
+  --color-simo-yellow-100: #FFEFA8;
+  --color-simo-yellow-200: #FBE266;
+  --color-simo-yellow-300: #F9D633;
+  --color-simo-yellow-400: #F4C600;
+  --color-simo-yellow-500: #DAB100;
+  --color-simo-yellow-600: #B89500;
+  --color-simo-yellow-700: #8A6F00;
+
+  --color-simo-black:    #000000;
+  --color-simo-ink:      #0A0A0A;
+  --color-simo-graphite: #1C1C1C;
+
+  --color-simo-red:      #E63946;
+  --color-simo-red-600:  #C8202E;
+  --color-simo-red-700:  #A0151F;
+
+  --color-simo-cream:    #F7F1E1;
+  --color-simo-cream-50: #FBF8EC;
+  --color-simo-cream-200:#EFE6CC;
+
+  --color-simo-white: #FFFFFF;
+  --color-simo-mute:  #F2F2F2;
+
+  /* Tailwind semantic aliases */
+  --color-background: var(--color-simo-yellow);
+  --color-foreground: var(--color-simo-black);
+
+  /* Typography stacks */
+  --font-display: var(--font-display-next), "Oswald", "Anton", "Archivo Black",
+                  "Bebas Neue", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    var(--font-inter), "Inter", "Manrope",
+                  ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono:    ui-monospace, "JetBrains Mono", "SF Mono", monospace;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+
+  /* Brutal shadows */
+  --shadow-brutal-sm: 3px 3px 0 0 #000000;
+  --shadow-brutal:    6px 6px 0 0 #000000;
+  --shadow-brutal-lg: 10px 10px 0 0 #000000;
+  --shadow-brutal-red:6px 6px 0 0 #E63946;
+
+  /* Motion */
+  --ease-snap: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+
+  /* Breakpoint xs для самых узких экранов (iPhone SE 320-375) */
+  --breakpoint-xs: 23rem; /* 368px */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ==========================================================================
+   Base
+   ========================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  background: var(--color-simo-yellow);
+  overflow-x: clip;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-simo-yellow);
+  color: var(--color-simo-black);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+h1, h2, h3, h4, h5, h6, .display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.92;
+  color: var(--color-simo-black);
+}
+
+h1 { font-size: clamp(3rem,    9vw,  6rem);    letter-spacing: -0.02em; }
+h2 { font-size: clamp(2.25rem, 6vw,  4.5rem);  }
+h3 { font-size: clamp(1.75rem, 4.5vw,3rem);    }
+h4 { font-size: clamp(1.375rem,3.5vw,2.25rem); }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; letter-spacing: 0.04em; }
+
+::selection {
+  background: var(--color-simo-black);
+  color: var(--color-simo-yellow);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-simo-black);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   SIMO Utility Classes
+   ========================================================================== */
+
+/* Safe-area screen wrapper для PWA */
+.simo-screen {
+  padding-top: max(env(safe-area-inset-top), 1.25rem);
+  padding-bottom: 1.25rem;
+  min-height: 100dvh;
+  flex: 1 0 auto;
+}
+
+/* Большая чёрная плашка */
+.simo-block {
+  background: var(--color-simo-black);
+  color: var(--color-simo-yellow);
+  border-radius: var(--radius-2xl);
+  padding: 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+  line-height: 0.95;
+}
+.simo-block--white   { color: var(--color-simo-white); }
+.simo-block--red     { background: var(--color-simo-red); color: #fff; }
+.simo-block--bordered{
+  background: transparent;
+  color: var(--color-simo-black);
+  border: 3px solid var(--color-simo-black);
+}
+
+/* Карточка на креме */
+.simo-card {
+  background: var(--color-simo-cream);
+  border: 2px solid var(--color-simo-black);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-brutal);
+  padding: 1.25rem;
+}
+
+.simo-card-flat {
+  background: var(--color-simo-cream);
+  border: 2px solid var(--color-simo-black);
+  border-radius: var(--radius-2xl);
+  padding: 1.25rem;
+}
+
+/* Eyebrow */
+.simo-kicker {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: var(--color-simo-black);
+}
+
+/* HUGE day number — адаптивный, tnum для слот-машинного эффекта */
+.simo-hero-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(5.5rem, 28vw, 13rem);
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  color: var(--color-simo-black);
+  display: inline-flex;
+  max-width: 100%;
+  font-feature-settings: "tnum", "lnum";
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Запрещено — используем тёмный red-700 для контраста AA на жёлтом/cream */
+.simo-forbidden {
+  position: relative;
+  color: var(--color-simo-red-700);
+}
+.simo-forbidden::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  border-top: 4px solid var(--color-simo-red-700);
+  transform: rotate(-4deg);
+}
+
+/* Чек-боксы дня — 44×44 по WCAG 2.5.5 */
+.simo-check {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 3px solid var(--color-simo-black);
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  transition: background var(--duration-fast) var(--ease-snap);
+  cursor: pointer;
+}
+.simo-check[data-checked="true"] {
+  background: var(--color-simo-black);
+  color: var(--color-simo-yellow);
+}
+
+/* Round stamp — position: relative обязательно, иначе SVG absolute летит к ближайшему позиционированному предку */
+.simo-stamp {
+  display: inline-grid;
+  place-items: center;
+  position: relative;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  color: var(--color-simo-black);
+}
+.simo-stamp svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  animation: simo-stamp-spin 24s linear infinite;
+}
+@keyframes simo-stamp-spin { to { transform: rotate(360deg); } }
+
+/* Bottom nav spacing — обязательно с safe-area для iOS home-indicator */
+.with-bottom-nav {
+  padding-bottom: calc(5.5rem + max(env(safe-area-inset-bottom), 0.75rem));
+}
+
+/* Inverted section (чёрная плашка) */
+.simo-invert {
+  background: var(--color-simo-black);
+  color: var(--color-simo-yellow);
+}
+.simo-invert h1, .simo-invert h2, .simo-invert h3, .simo-invert h4 {
+  color: var(--color-simo-yellow);
 }

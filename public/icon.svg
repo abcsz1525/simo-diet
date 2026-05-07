@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#F4C600"/>
+  <text x="256" y="290" text-anchor="middle" font-family="'Anton','Archivo Black',sans-serif" font-weight="900" font-size="220" fill="#000000" letter-spacing="-6">SIMO</text>
+  <rect x="120" y="360" width="272" height="14" fill="#000000"/>
+  <text x="256" y="438" text-anchor="middle" font-family="'Anton','Archivo Black',sans-serif" font-weight="900" font-size="60" fill="#000000" letter-spacing="6">30 DAYS</text>
+</svg>

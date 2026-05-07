@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIMO 30 — Диета-челлендж PWA
 
-## Getting Started
+Приложение-помощник для прохождения 30-дневного челленджа по диете SIMO (Phase 1: Eliminación). Помогает держать план, отмечать приёмы пищи, вести дневник самочувствия и не сходить с дистанции.
 
-First, run the development server:
+**Стек:** Next.js 16 · TypeScript · Tailwind v4 · Zustand · Serwist (PWA) · Framer Motion
+
+## Что внутри
+
+- 🟡 Дашборд челленджа с slot-machine-счётчиком дня, прогресс-баром и серией без срывов
+- ✅ Чек-лист дня — 5 приёмов пищи с подсказками что можно есть, конфетти при закрытии дня
+- 🔍 Справочник 366 продуктов (199 разрешённых + 167 запрещённых) с поиском и фильтром
+- 📓 Дневник самочувствия — настроение, энергия, голод, сон, вес, заметки
+- 📜 10 правил SIMO + советы + 3 фазы
+- 🎉 Milestones на 1, 3, 7, 14, 21, 30 день — модалка с конфетти и цитатой
+- 🔔 Локальные уведомления (browser Notification API)
+- 📱 PWA — устанавливается на iOS/Android, работает офлайн через Service Worker
+- 🌑 Брутальный жёлто-чёрный дизайн в стиле SIMO
+
+## Команды
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production-сборка (webpack, чтобы Serwist собрал SW)
+npm start        # запуск prod-сборки
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Структура
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+app/                 # роуты App Router
+  page.tsx           # дашборд
+  checklist/         # чек-лист дня
+  food/              # справочник продуктов
+  journal/           # дневник
+  rules/             # правила
+  settings/          # настройки
+  sw.ts              # service worker (Serwist)
+components/          # UI компоненты
+lib/
+  diet-data.ts       # 366 продуктов, правила, фазы
+  store.ts           # Zustand + persist в localStorage
+  notifications.ts   # планировщик уведомлений
+  haptic.ts          # vibrate API на тачах
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Данные
 
-## Learn More
+Все данные хранятся локально в `localStorage` через Zustand persist — никакого бэкенда. Сброс через `/settings → Опасная зона`.
 
-To learn more about Next.js, take a look at the following resources:
+## Деплой
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`npm run build` → `npm start`. Работает на Railway, Vercel, Render, Fly.io.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Лицензия
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT.
