@@ -327,7 +327,8 @@ function MealRow({
                     <button
                       type="button"
                       onClick={() => useIdea(currentIdea)}
-                      className="simo-kicker px-3 py-2 bg-black text-[#F4C600] rounded-md hover:opacity-90 active:translate-y-[1px] focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black"
+                      className="font-sans font-bold uppercase tracking-[0.14em] text-xs px-3 py-2 bg-black rounded-md hover:opacity-90 active:translate-y-[1px] focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black"
+                      style={{ color: "#F4C600" }}
                     >
                       ВЫБРАТЬ ЭТО →
                     </button>
@@ -337,7 +338,7 @@ function MealRow({
                         setIdeasOpen(true);
                         haptic.tap();
                       }}
-                      className="simo-kicker px-3 py-2 border-2 border-black rounded-md hover:bg-black/5 active:translate-y-[1px] focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black"
+                      className="font-sans font-bold uppercase tracking-[0.14em] text-xs px-3 py-2 border-2 border-black rounded-md text-black hover:bg-black/5 active:translate-y-[1px] focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black"
                     >
                       ВСЕ {ideas.length} ВАРИАНТОВ
                     </button>
