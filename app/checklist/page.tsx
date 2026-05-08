@@ -353,7 +353,7 @@ function MealRow({
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-                    className="overflow-hidden"
+                    className="overflow-hidden w-full min-w-0"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <p className="simo-kicker">
@@ -368,7 +368,7 @@ function MealRow({
                         СВЕРНУТЬ ✕
                       </button>
                     </div>
-                    <div className="grid gap-2.5">
+                    <div className="grid grid-cols-1 gap-2.5 w-full min-w-0">
                       {ideas.map((idea) => (
                         <IdeaCard
                           key={idea.id}
@@ -411,28 +411,39 @@ function MealRow({
 function IdeaCard({ idea, onUse }: { idea: MealIdea; onUse: () => void }) {
   const [expanded, setExpanded] = useState(false);
 
+  // Используем div + role=button вместо <button> чтобы избежать
+  // safari-quirk'а с интринсиком шириной кнопки + flex-детей,
+  // из-за которого карточка раздувалась за viewport на iPhone.
   return (
-    <article className="border-2 border-black rounded-2xl bg-[#F7F1E1] p-3">
-      <button
-        type="button"
+    <article className="w-full max-w-full min-w-0 border-2 border-black rounded-2xl bg-[#F7F1E1] p-3 overflow-hidden">
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded((v) => !v)}
-        className="w-full text-left"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setExpanded((v) => !v);
+          }
+        }}
+        aria-expanded={expanded}
+        className="block w-full cursor-pointer text-left focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black rounded"
       >
-        <div className="flex items-start gap-2.5">
+        <div className="flex items-start gap-2.5 w-full min-w-0">
           <span className="text-2xl shrink-0" aria-hidden>
             {idea.emoji}
           </span>
           <div className="flex-1 min-w-0">
-            <p className="font-display text-base uppercase leading-tight">
+            <p className="font-display text-base uppercase leading-tight break-words">
               {idea.title}
             </p>
             {!expanded && (
-              <p className="text-xs opacity-70 mt-1 truncate">
+              <p className="text-xs opacity-70 mt-1 break-words">
                 {idea.ingredients.slice(0, 3).join(" · ")}
               </p>
             )}
             {idea.minutes != null && (
-              <p className="simo-kicker text-[10px] mt-1">
+              <p className="font-sans font-bold uppercase tracking-[0.14em] text-[10px] mt-1 text-black">
                 ⏱ {idea.minutes} МИН
                 {idea.tags && idea.tags.length > 0
                   ? ` · ${idea.tags[0].toUpperCase()}`
@@ -440,11 +451,11 @@ function IdeaCard({ idea, onUse }: { idea: MealIdea; onUse: () => void }) {
               </p>
             )}
           </div>
-          <span className="text-base opacity-60 mt-0.5" aria-hidden>
+          <span className="text-base opacity-60 mt-0.5 shrink-0" aria-hidden>
             {expanded ? "▴" : "▾"}
           </span>
         </div>
-      </button>
+      </div>
 
       <AnimatePresence initial={false}>
         {expanded && (
@@ -457,19 +468,16 @@ function IdeaCard({ idea, onUse }: { idea: MealIdea; onUse: () => void }) {
           >
             <div className="pt-3 mt-3 border-t-2 border-dashed border-black/20">
               <p className="simo-kicker mb-1.5">ИНГРЕДИЕНТЫ</p>
-              <ul className="text-sm leading-relaxed mb-3 list-disc list-inside">
+              <ul className="text-sm leading-relaxed mb-3 list-disc list-inside break-words">
                 {idea.ingredients.map((ing, i) => (
                   <li key={i}>{ing}</li>
                 ))}
               </ul>
               <p className="simo-kicker mb-1.5">КАК ГОТОВИТЬ</p>
-              <p className="text-sm leading-relaxed mb-3">{idea.steps}</p>
-              <SimoButton
-                variant="primary"
-                size="sm"
-                block
-                onClick={onUse}
-              >
+              <p className="text-sm leading-relaxed mb-3 break-words">
+                {idea.steps}
+              </p>
+              <SimoButton variant="primary" size="sm" block onClick={onUse}>
                 Это съем — записать в дневник
               </SimoButton>
             </div>
