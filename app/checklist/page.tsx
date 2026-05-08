@@ -392,11 +392,7 @@ function MealRow({
                 value={localNote}
                 onChange={(e) => setLocalNote(e.target.value)}
                 onBlur={(e) => persistNote(e.target.value)}
-                placeholder={
-                  currentIdea
-                    ? `Например: ${currentIdea.title}`
-                    : "Опиши приём пищи свободно"
-                }
+                placeholder="Запиши вручную что съел — или нажми «ВЫБРАТЬ ЭТО →» в карточке выше"
                 rows={2}
                 className="w-full px-3 py-2 border-[2px] border-black rounded-lg bg-white text-sm resize-y focus:outline focus:outline-[3px] focus:outline-offset-[2px] focus:outline-black"
               />
