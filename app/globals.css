@@ -73,7 +73,10 @@ html {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
   background: var(--color-simo-yellow);
-  overflow-x: clip;
+  /* НЕ ставить overflow-x на html/body — это создаёт containing block
+     для position:fixed, и BottomNav (fixed bottom-0) начинает уезжать
+     по document-body вместо viewport на iOS Safari при скролле.
+     Кадрирование горизонтального переполнения — на .simo-screen ниже. */
 }
 
 body {
@@ -85,7 +88,6 @@ body {
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
   min-height: 100dvh;
-  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6, .display {
@@ -132,6 +134,10 @@ h6 { font-size: 1rem; letter-spacing: 0.04em; }
   padding-bottom: 1.25rem;
   min-height: 100dvh;
   flex: 1 0 auto;
+  /* overflow-x: clip здесь, а не на html/body — иначе BottomNav уплывает
+     (см. коммент про containing block выше). BottomNav рендерится
+     снаружи .simo-screen, поэтому clip его не зацепит. */
+  overflow-x: clip;
 }
 
 /* Большая чёрная плашка */
