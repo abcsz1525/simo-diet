@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { SimoButton } from "@/components/ui/simo-button";
 import {
   useSimoStore,
   todayIso,
+  getChallengeDay,
   type MealId,
 } from "@/lib/store";
-import {
-  DAY_STRUCTURE,
-  ALLOWED_FOODS,
-} from "@/lib/diet-data";
+import { DAY_STRUCTURE } from "@/lib/diet-data";
+import { ideasFor, ideaOfDay, type MealIdea } from "@/lib/meal-ideas";
 import { PageHeader } from "@/components/page-header";
 import * as haptic from "@/lib/haptic";
 
@@ -31,11 +30,13 @@ export default function ChecklistPage() {
   const startDate = useSimoStore((s) => s.startDate);
   const logs = useSimoStore((s) => s.logs);
   const toggleMeal = useSimoStore((s) => s.toggleMeal);
+  const setMealNote = useSimoStore((s) => s.setMealNote);
   const setDayCompleted = useSimoStore((s) => s.setDayCompleted);
   const markCheated = useSimoStore((s) => s.markCheated);
   const unmarkCheated = useSimoStore((s) => s.unmarkCheated);
 
   const today = todayIso();
+  const dayN = Math.max(1, getChallengeDay(startDate, today));
   const log = logs[today];
   const totalChecked =
     log != null ? Object.values(log.meals).filter(Boolean).length : 0;
@@ -71,9 +72,12 @@ export default function ChecklistPage() {
       <ul className="border-t-[3px] border-black">
         {DAY_STRUCTURE.map((meal) => {
           const checked = log?.meals[meal.id] ?? false;
+          const note = log?.mealNotes?.[meal.id] ?? "";
           return (
             <MealRow
               key={meal.id}
+              mealId={meal.id}
+              dayN={dayN}
               checked={checked}
               onToggle={() => onToggle(meal.id)}
               icon={mealAccent[meal.id]}
@@ -81,15 +85,14 @@ export default function ChecklistPage() {
               subtitle={meal.subtitle}
               instruction={meal.instruction}
               optional={meal.optional}
-              foodHint={ALLOWED_FOODS.filter((f) =>
-                f.meal?.includes(meal.id),
-              ).slice(0, 6)}
+              note={note}
+              onNoteChange={(text) => setMealNote(today, meal.id, text)}
             />
           );
         })}
       </ul>
 
-      {/* Срыв / возврат — приглушённая warning-карточка, чтобы не перетягивать внимание у главного CTA */}
+      {/* Срыв / возврат — приглушённая warning-карточка */}
       <div className="mt-8 simo-card-flat border-l-[6px] border-l-[#A0151F]">
         <p className="simo-kicker mb-2" style={{ color: "#A0151F" }}>
           СРЫВ?
@@ -149,7 +152,13 @@ export default function ChecklistPage() {
   );
 }
 
+/* ----------------------------------------------------------------------------
+ * MealRow
+ * -------------------------------------------------------------------------- */
+
 interface MealRowProps {
+  mealId: MealId;
+  dayN: number;
   checked: boolean;
   onToggle: () => void;
   icon: string;
@@ -157,10 +166,13 @@ interface MealRowProps {
   subtitle: string;
   instruction: string;
   optional: boolean;
-  foodHint: { id: string; name: string; emoji: string }[];
+  note: string;
+  onNoteChange: (text: string) => void;
 }
 
 function MealRow({
+  mealId,
+  dayN,
   checked,
   onToggle,
   icon,
@@ -168,13 +180,36 @@ function MealRow({
   subtitle,
   instruction,
   optional,
-  foodHint,
+  note,
+  onNoteChange,
 }: MealRowProps) {
+  const ideas = ideasFor(mealId);
+  const todayIdea = ideaOfDay(mealId, dayN);
+  const [ideasOpen, setIdeasOpen] = useState(false);
+  const [localNote, setLocalNote] = useState(note);
+
+  // Sync external store updates → local state (e.g. on first mount/hydration)
+  useEffect(() => {
+    setLocalNote(note);
+  }, [note]);
+
+  const persistNote = (text: string) => {
+    if (text !== note) onNoteChange(text);
+  };
+
+  const useIdea = (idea: MealIdea) => {
+    const text = `${idea.title}\n${idea.ingredients.join(", ")}`;
+    setLocalNote(text);
+    onNoteChange(text);
+    setIdeasOpen(false);
+    haptic.tap();
+  };
+
   return (
     <motion.li
       layout
       className="py-5 border-b-[3px] border-black"
-      animate={{ opacity: checked ? 0.5 : 1 }}
+      animate={{ opacity: checked ? 0.65 : 1 }}
     >
       <div className="flex items-start gap-4">
         <button
@@ -202,9 +237,11 @@ function MealRow({
             </svg>
           )}
         </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-2xl" aria-hidden>
+              {icon}
+            </span>
             <h3
               className={`text-2xl ${
                 checked ? "line-through" : ""
@@ -220,21 +257,170 @@ function MealRow({
           </div>
           <p className="simo-kicker mb-2">{subtitle}</p>
           <p className="text-base mb-3">{instruction}</p>
-          {foodHint.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {foodHint.map((f) => (
-                <span
-                  key={f.id}
-                  className="inline-flex items-center gap-1 text-xs bg-black/10 px-2 py-1 rounded-full"
+
+          {/* Идея дня + раскрывающийся список вариантов */}
+          {ideas.length > 0 && (
+            <div className="mb-4">
+              {todayIdea && !ideasOpen && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIdeasOpen(true);
+                    haptic.tap();
+                  }}
+                  className="w-full text-left simo-card-flat hover:translate-y-[-1px] transition-transform"
                 >
-                  <span>{f.emoji}</span>
-                  <span>{f.name}</span>
-                </span>
-              ))}
+                  <p className="simo-kicker mb-1.5 flex items-center gap-1">
+                    <span>💡</span>
+                    <span>ИДЕЯ НА СЕГОДНЯ</span>
+                  </p>
+                  <p className="font-display text-xl uppercase leading-tight mb-1">
+                    {todayIdea.emoji} {todayIdea.title}
+                  </p>
+                  <p className="text-sm opacity-75">
+                    {todayIdea.ingredients.slice(0, 4).join(" · ")}
+                    {todayIdea.ingredients.length > 4 ? "…" : ""}
+                  </p>
+                  <p className="simo-kicker mt-3">
+                    Посмотреть ещё {ideas.length - 1} вариантов →
+                  </p>
+                </button>
+              )}
+
+              <AnimatePresence initial={false}>
+                {ideasOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="simo-kicker">
+                        💡 ВАРИАНТЫ ({ideas.length})
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIdeasOpen(false)}
+                        className="simo-kicker hover:opacity-60"
+                        aria-label="Свернуть варианты"
+                      >
+                        СВЕРНУТЬ ✕
+                      </button>
+                    </div>
+                    <div className="grid gap-2.5">
+                      {ideas.map((idea) => (
+                        <IdeaCard
+                          key={idea.id}
+                          idea={idea}
+                          onUse={() => useIdea(idea)}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Поле "что я съел" */}
+          {mealId !== "morning_water" && (
+            <div>
+              <label className="simo-kicker mb-2 block">
+                ЧТО Я СЪЕЛ {checked && note ? "✓" : ""}
+              </label>
+              <textarea
+                value={localNote}
+                onChange={(e) => setLocalNote(e.target.value)}
+                onBlur={(e) => persistNote(e.target.value)}
+                placeholder={
+                  todayIdea
+                    ? `Например: ${todayIdea.title}`
+                    : "Опиши приём пищи свободно"
+                }
+                rows={2}
+                className="w-full px-3 py-2 border-[2px] border-black rounded-lg bg-white text-sm resize-y focus:outline focus:outline-[3px] focus:outline-offset-[2px] focus:outline-black"
+              />
             </div>
           )}
         </div>
       </div>
     </motion.li>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * IdeaCard — карточка варианта блюда
+ * -------------------------------------------------------------------------- */
+function IdeaCard({ idea, onUse }: { idea: MealIdea; onUse: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <article className="border-2 border-black rounded-2xl bg-[#F7F1E1] p-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full text-left"
+      >
+        <div className="flex items-start gap-2.5">
+          <span className="text-2xl shrink-0" aria-hidden>
+            {idea.emoji}
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-display text-base uppercase leading-tight">
+              {idea.title}
+            </p>
+            {!expanded && (
+              <p className="text-xs opacity-70 mt-1 truncate">
+                {idea.ingredients.slice(0, 3).join(" · ")}
+              </p>
+            )}
+            {idea.minutes != null && (
+              <p className="simo-kicker text-[10px] mt-1">
+                ⏱ {idea.minutes} МИН
+                {idea.tags && idea.tags.length > 0
+                  ? ` · ${idea.tags[0].toUpperCase()}`
+                  : ""}
+              </p>
+            )}
+          </div>
+          <span className="text-base opacity-60 mt-0.5" aria-hidden>
+            {expanded ? "▴" : "▾"}
+          </span>
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 mt-3 border-t-2 border-dashed border-black/20">
+              <p className="simo-kicker mb-1.5">ИНГРЕДИЕНТЫ</p>
+              <ul className="text-sm leading-relaxed mb-3 list-disc list-inside">
+                {idea.ingredients.map((ing, i) => (
+                  <li key={i}>{ing}</li>
+                ))}
+              </ul>
+              <p className="simo-kicker mb-1.5">КАК ГОТОВИТЬ</p>
+              <p className="text-sm leading-relaxed mb-3">{idea.steps}</p>
+              <SimoButton
+                variant="primary"
+                size="sm"
+                block
+                onClick={onUse}
+              >
+                Это съем — записать в дневник
+              </SimoButton>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </article>
   );
 }

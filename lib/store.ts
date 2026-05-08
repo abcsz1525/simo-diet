@@ -16,6 +16,8 @@ export interface DayLog {
   date: string;
   /** Какие приёмы пищи отмечены */
   meals: Record<MealId, boolean>;
+  /** Заметки по приёмам пищи: что реально съел в каждый */
+  mealNotes?: Partial<Record<MealId, string>>;
   /** Был ли сегодня срыв (съел запрещённое) */
   cheated: boolean;
   /** Что съел запрещённого (опционально) */
@@ -57,6 +59,7 @@ interface SimoState {
   setUserProfile: (data: { userName?: string; startWeight?: number; goalNote?: string }) => void;
   toggleMeal: (date: string, meal: MealId) => void;
   setMeal: (date: string, meal: MealId, value: boolean) => void;
+  setMealNote: (date: string, meal: MealId, text: string) => void;
   markCheated: (date: string, note?: string) => void;
   unmarkCheated: (date: string) => void;
   saveJournal: (date: string, entry: Partial<Omit<DayLog, "date" | "meals" | "cheated">>) => void;
@@ -136,6 +139,24 @@ export const useSimoStore = create<SimoState>()(
                 ...day,
                 meals: { ...day.meals, [meal]: value },
               },
+            },
+          };
+        }),
+
+      setMealNote: (date, meal, text) =>
+        set((state) => {
+          const day = ensureDay(state.logs, date);
+          const trimmed = text.trim();
+          const nextNotes = { ...(day.mealNotes ?? {}) };
+          if (trimmed.length === 0) {
+            delete nextNotes[meal];
+          } else {
+            nextNotes[meal] = trimmed;
+          }
+          return {
+            logs: {
+              ...state.logs,
+              [date]: { ...day, mealNotes: nextNotes },
             },
           };
         }),
