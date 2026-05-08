@@ -759,10 +759,30 @@ export function ideasFor(mealId: MealId): MealIdea[] {
   return MEAL_IDEAS[mealId] ?? [];
 }
 
+/** Детерминированный индекс "идеи дня" в массиве `ideasFor(mealId)` */
+export function ideaOfDayIndex(mealId: MealId, dayN: number): number {
+  const list = ideasFor(mealId);
+  if (list.length === 0) return -1;
+  return Math.abs(dayN - 1) % list.length;
+}
+
 /** Детерминированная "идея дня" — одна и та же для конкретного дня челленджа */
 export function ideaOfDay(mealId: MealId, dayN: number): MealIdea | undefined {
+  const idx = ideaOfDayIndex(mealId, dayN);
+  return idx === -1 ? undefined : ideasFor(mealId)[idx];
+}
+
+/** Случайный индекс из массива идей, исключая текущий */
+export function rerollIdeaIndex(
+  mealId: MealId,
+  currentIdx: number,
+): number {
   const list = ideasFor(mealId);
-  if (list.length === 0) return undefined;
-  const idx = Math.abs(dayN - 1) % list.length;
-  return list[idx];
+  if (list.length <= 1) return currentIdx;
+  let next = currentIdx;
+  // вытаскиваем рандом до тех пор пока не получим другой индекс
+  while (next === currentIdx) {
+    next = Math.floor(Math.random() * list.length);
+  }
+  return next;
 }

@@ -11,7 +11,12 @@ import {
   type MealId,
 } from "@/lib/store";
 import { DAY_STRUCTURE } from "@/lib/diet-data";
-import { ideasFor, ideaOfDay, type MealIdea } from "@/lib/meal-ideas";
+import {
+  ideasFor,
+  ideaOfDayIndex,
+  rerollIdeaIndex,
+  type MealIdea,
+} from "@/lib/meal-ideas";
 import { PageHeader } from "@/components/page-header";
 import * as haptic from "@/lib/haptic";
 
@@ -184,9 +189,16 @@ function MealRow({
   onNoteChange,
 }: MealRowProps) {
   const ideas = ideasFor(mealId);
-  const todayIdea = ideaOfDay(mealId, dayN);
+  const initialIdx = ideaOfDayIndex(mealId, dayN);
+  const [pickedIdx, setPickedIdx] = useState(initialIdx);
+  const currentIdea = pickedIdx >= 0 ? ideas[pickedIdx] : undefined;
   const [ideasOpen, setIdeasOpen] = useState(false);
   const [localNote, setLocalNote] = useState(note);
+
+  const reroll = () => {
+    setPickedIdx((prev) => rerollIdeaIndex(mealId, prev));
+    haptic.tap();
+  };
 
   // Sync external store updates → local state (e.g. on first mount/hydration)
   useEffect(() => {
@@ -261,30 +273,76 @@ function MealRow({
           {/* Идея дня + раскрывающийся список вариантов */}
           {ideas.length > 0 && (
             <div className="mb-4">
-              {todayIdea && !ideasOpen && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdeasOpen(true);
-                    haptic.tap();
-                  }}
-                  className="w-full text-left simo-card-flat hover:translate-y-[-1px] transition-transform"
-                >
-                  <p className="simo-kicker mb-1.5 flex items-center gap-1">
-                    <span>💡</span>
-                    <span>ИДЕЯ НА СЕГОДНЯ</span>
-                  </p>
-                  <p className="font-display text-xl uppercase leading-tight mb-1">
-                    {todayIdea.emoji} {todayIdea.title}
-                  </p>
-                  <p className="text-sm opacity-75">
-                    {todayIdea.ingredients.slice(0, 4).join(" · ")}
-                    {todayIdea.ingredients.length > 4 ? "…" : ""}
-                  </p>
-                  <p className="simo-kicker mt-3">
-                    Посмотреть ещё {ideas.length - 1} вариантов →
-                  </p>
-                </button>
+              {currentIdea && !ideasOpen && (
+                <div className="simo-card-flat">
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <p className="simo-kicker flex items-center gap-1">
+                      <span>💡</span>
+                      <span>ИДЕЯ НА СЕГОДНЯ</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={reroll}
+                      className="simo-kicker flex items-center gap-1 px-2.5 py-1 -my-1 -mr-1 rounded-md hover:bg-black/5 active:bg-black/10 focus:outline focus:outline-[2px] focus:outline-offset-[1px] focus:outline-black"
+                      aria-label="Сгенерировать другое блюдо"
+                    >
+                      <motion.span
+                        key={pickedIdx}
+                        initial={{ rotate: 0 }}
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.5, ease: [0.2, 0, 0, 1] }}
+                        className="inline-block"
+                        aria-hidden
+                      >
+                        🔄
+                      </motion.span>
+                      <span>ДРУГОЕ</span>
+                    </button>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentIdea.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                    >
+                      <p className="font-display text-xl uppercase leading-tight mb-1">
+                        {currentIdea.emoji} {currentIdea.title}
+                      </p>
+                      <p className="text-sm opacity-75">
+                        {currentIdea.ingredients.slice(0, 4).join(" · ")}
+                        {currentIdea.ingredients.length > 4 ? "…" : ""}
+                      </p>
+                      {currentIdea.minutes != null && (
+                        <p className="simo-kicker text-[10px] mt-2">
+                          ⏱ {currentIdea.minutes} МИН
+                        </p>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => useIdea(currentIdea)}
+                      className="simo-kicker px-3 py-2 bg-black text-[#F4C600] rounded-md hover:opacity-90 active:translate-y-[1px] focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black"
+                    >
+                      ВЫБРАТЬ ЭТО →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIdeasOpen(true);
+                        haptic.tap();
+                      }}
+                      className="simo-kicker px-3 py-2 border-2 border-black rounded-md hover:bg-black/5 active:translate-y-[1px] focus:outline focus:outline-[2px] focus:outline-offset-[2px] focus:outline-black"
+                    >
+                      ВСЕ {ideas.length} ВАРИАНТОВ
+                    </button>
+                  </div>
+                </div>
               )}
 
               <AnimatePresence initial={false}>
@@ -335,8 +393,8 @@ function MealRow({
                 onChange={(e) => setLocalNote(e.target.value)}
                 onBlur={(e) => persistNote(e.target.value)}
                 placeholder={
-                  todayIdea
-                    ? `Например: ${todayIdea.title}`
+                  currentIdea
+                    ? `Например: ${currentIdea.title}`
                     : "Опиши приём пищи свободно"
                 }
                 rows={2}
